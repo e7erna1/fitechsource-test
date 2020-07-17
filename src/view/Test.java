@@ -1,0 +1,47 @@
+package src.view;
+
+import src.buisness.ITestInteractor;
+import src.TestConsts;
+import src.TestException;
+import src.buisness.TestCalc;
+import src.buisness.TestInteractor;
+import java.util.*;
+import src.callback.TestCallback;
+
+/**
+ * Should be improved to reduce calculation time.
+ *
+ * 1. Change this file or create new one using parallel calculation mode. 2. Do not use `executors`,
+ * only plain threads  (max threads count which should be created for calculations is
+ * com.fitechsource.test.java.TestConsts#MAX_THREADS) 3. Try to provide simple solution, do not implement
+ * frameworks. 4. Don't forget that calculation method can throw exception, process it right way.
+ * (Stop calculation process and print error message. Ignore already calculated intermediate
+ * results, user doesn't need it.)
+ *
+ * Please attach code files to email - skhisamov@fitechsource.com
+ */
+
+public class Test implements TestCallback {
+
+  public static void main(String[] args) throws TestException {
+
+//    Set<Double> res = new HashSet<>();
+//    for (int i = 0; i < TestConsts.N; i++) {
+//      res.addAll(TestCalc.calculate(i));
+//    }
+//    System.out.println(res);
+
+    Test test = new Test();
+    test.method();
+  }
+
+  private void method() {
+    ITestInteractor testInteractor = new TestInteractor();
+    testInteractor.execute(TestConsts.N, TestConsts.MAX_THREADS, this);
+  }
+
+  @Override
+  public void showResult(Set<Double> set) {
+    System.out.println(set);
+  }
+}
