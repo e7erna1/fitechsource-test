@@ -36,8 +36,8 @@ public class Test implements TestCallback {
   }
 
   private void method() {
-    ITestInteractor testInteractor = new TestInteractor();
-    testInteractor.execute(TestConsts.N, TestConsts.MAX_THREADS, this);
+    ITestInteractor testInteractor = new TestInteractor(0, new HashSet<Double>(), this);
+    testInteractor.execute(TestConsts.N, TestConsts.MAX_THREADS);
   }
 
   @Override

@@ -26,7 +26,6 @@ public class TestCalc {
     for (int j = 0; j < n; j++) {
       res.add(rnd.nextDouble());
     }
-
     return res;
   }
 }
