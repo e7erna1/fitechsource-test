@@ -1,27 +1,31 @@
 package src.buisness;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
+import src.TestException;
 import src.callback.TestCallback;
-import src.view.Test;
 
 public class TestInteractorSec {
 
   private final TestCallback testCallback;
   private final Queue<Runnable> workQueue = new ConcurrentLinkedQueue<>();
   private final Set<Double> resultSet = Collections.synchronizedSet(new HashSet<>());
-  private Integer threadNumber;
-  public volatile boolean isRunning = true;
+  private final List<Thread> threadList = new ArrayList<>();
+  private int threadNumber;
+  private volatile boolean isRunning = true, isWritten = false;
 
   public TestInteractorSec(int threadNumber, TestCallback testCallback) {
     this.testCallback = testCallback;
     this.threadNumber = threadNumber;
     for (int i = 0; i < threadNumber; i++) {
-      new Thread(new TaskWorker()).start();
+      Thread thread = new Thread(new TaskWorker());
+      threadList.add(thread);
+      thread.start();
     }
   }
 
@@ -30,8 +34,13 @@ public class TestInteractorSec {
       try {
         Set<Double> doubles = TestCalc.calculate(i);
         resultSet.addAll(doubles);
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (TestException e) {
+        if (!isWritten) {
+          isWritten = true;
+          threadList.forEach(Thread::interrupt);
+          resultSet.clear();
+          System.out.println(e.getMessage());
+        }
       }
     });
   }
@@ -43,10 +52,8 @@ public class TestInteractorSec {
   }
 
   public void shutdown() {
-    synchronized (threadNumber) {
-      threadNumber--;
-      isRunning = false;
-    }
+    threadNumber--;
+    isRunning = false;
     if (threadNumber == 0) {
       testCallback.showResult(resultSet);
     }
