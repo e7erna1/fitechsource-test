@@ -1,45 +1,81 @@
 package src.buisness;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import src.TestException;
 import src.callback.TestCallback;
 
-public class TestInteractor implements ITestInteractor, Runnable {
+public class TestInteractor implements ITestInteractor {
 
-  TestCallback testCallback;
-  final Set<Double> resultSet;
-  int currentIteration, iterationsNumber, threadNumber;
+  private final TestCallback testCallback;
+  private final Queue<Runnable> workQueue = new ConcurrentLinkedQueue<>();
+  private final Set<Double> resultSet = Collections.synchronizedSet(new HashSet<>());
+  private final List<Thread> threadList = new ArrayList<>();
+  private int threadNumber;
+  private volatile boolean isRunning = true, isWritten = false;
 
-  public TestInteractor(int currentIteration, Set<Double> resultSet, TestCallback testCallback) {
-    this.currentIteration = currentIteration;
-    this.resultSet = resultSet;
+  public TestInteractor(int threadNumber, TestCallback testCallback) {
     this.testCallback = testCallback;
-  }
-
-  @Override
-  public void execute(int iterationsNumber, int threadNumber) {
-    this.iterationsNumber = iterationsNumber;
     this.threadNumber = threadNumber;
-
-    for (int i = 0; i < iterationsNumber; i++) {
-      Thread thread = new Thread(new TestInteractor(i, resultSet,  testCallback));
+    for (int i = 0; i < threadNumber; i++) {
+      Thread thread = new Thread(new TaskWorker());
+      threadList.add(thread);
       thread.start();
     }
   }
 
-  @Override
-  public void run() {
-    try {
-      Set<Double> buf = TestCalc.calculate(currentIteration);
-      resultSet.addAll(buf);
-      System.out.println(buf);
-      System.out.println(currentIteration);
-      System.out.println();
-      if (currentIteration == iterationsNumber) {
-        testCallback.showResult(resultSet);
+  public void execute(int iterationsNumber) {
+    this.executeTask(() -> {
+      try {
+        Set<Double> doubles = TestCalc.calculate(iterationsNumber);
+        resultSet.addAll(doubles);
+      } catch (TestException e) {
+        isRunning = false;
+        if (!isWritten) {
+          workQueue.clear();
+          isWritten = true;
+          threadList.forEach(Thread::interrupt);
+          resultSet.clear();
+          System.out.println(e.getMessage());
+        }
       }
-    } catch (TestException e) {
-      e.printStackTrace();
+    });
+  }
+
+  private void executeTask(Runnable command) {
+    if (isRunning) {
+      workQueue.offer(command);
+    }
+  }
+
+  private void shutdown() {
+    threadNumber--;
+    isRunning = false;
+    if (threadNumber == 0) {
+      testCallback.showResult(resultSet);
+    }
+  }
+
+  private final class TaskWorker implements Runnable {
+
+    @Override
+    public void run() {
+      while (isRunning) {
+        Runnable nextTask = workQueue.poll();
+        if (nextTask != null) {
+          nextTask.run();
+          System.out.println(workQueue.size());
+          System.out.println(Thread.currentThread().getId());
+          if (workQueue.size() == 0) {
+            shutdown();
+          }
+        }
+      }
     }
   }
 }
