@@ -40,19 +40,9 @@ public class Test implements TestCallback {
 //    ITestInteractor testInteractor = new TestInteractor(0, new HashSet<>(), this);
 //    testInteractor.execute(TestConsts.N, TestConsts.MAX_THREADS);
 
-    Set<Double> resultSet = Collections.synchronizedSet(new HashSet<>());
-    TestInteractorSec testInteractorSec = new TestInteractorSec(TestConsts.MAX_THREADS);
+    TestInteractorSec testInteractorSec = new TestInteractorSec(TestConsts.MAX_THREADS, this);
     for (int i = 0; i < TestConsts.N; i++) {
-      int finalI = i;
-      testInteractorSec.execute(() -> {
-        try {
-          Set<Double> doubles = TestCalc.calculate(finalI);
-          resultSet.addAll(TestCalc.calculate(finalI));
-          System.out.println(doubles);
-        } catch (TestException e) {
-          e.printStackTrace();
-        }
-      });
+      testInteractorSec.execute(i);
     }
   }
 
