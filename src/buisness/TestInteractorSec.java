@@ -35,6 +35,7 @@ public class TestInteractorSec {
         Set<Double> doubles = TestCalc.calculate(i);
         resultSet.addAll(doubles);
       } catch (TestException e) {
+        isRunning = false;
         if (!isWritten) {
           isWritten = true;
           threadList.forEach(Thread::interrupt);
