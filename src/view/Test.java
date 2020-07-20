@@ -6,6 +6,7 @@ import src.TestException;
 import src.buisness.TestCalc;
 import src.buisness.TestInteractor;
 import java.util.*;
+import src.buisness.TestInteractorSec;
 import src.callback.TestCallback;
 
 /**
@@ -13,10 +14,10 @@ import src.callback.TestCallback;
  *
  * 1. Change this file or create new one using parallel calculation mode. 2. Do not use `executors`,
  * only plain threads  (max threads count which should be created for calculations is
- * com.fitechsource.test.java.TestConsts#MAX_THREADS) 3. Try to provide simple solution, do not implement
- * frameworks. 4. Don't forget that calculation method can throw exception, process it right way.
- * (Stop calculation process and print error message. Ignore already calculated intermediate
- * results, user doesn't need it.)
+ * com.fitechsource.test.java.TestConsts#MAX_THREADS) 3. Try to provide simple solution, do not
+ * implement frameworks. 4. Don't forget that calculation method can throw exception, process it
+ * right way. (Stop calculation process and print error message. Ignore already calculated
+ * intermediate results, user doesn't need it.)
  *
  * Please attach code files to email - skhisamov@fitechsource.com
  */
@@ -36,8 +37,23 @@ public class Test implements TestCallback {
   }
 
   private void method() {
-    ITestInteractor testInteractor = new TestInteractor(0, new HashSet<Double>(), this);
-    testInteractor.execute(TestConsts.N, TestConsts.MAX_THREADS);
+//    ITestInteractor testInteractor = new TestInteractor(0, new HashSet<>(), this);
+//    testInteractor.execute(TestConsts.N, TestConsts.MAX_THREADS);
+
+    Set<Double> resultSet = Collections.synchronizedSet(new HashSet<>());
+    TestInteractorSec testInteractorSec = new TestInteractorSec(TestConsts.MAX_THREADS);
+    for (int i = 0; i < TestConsts.N; i++) {
+      int finalI = i;
+      testInteractorSec.execute(() -> {
+        try {
+          Set<Double> doubles = TestCalc.calculate(finalI);
+          resultSet.addAll(TestCalc.calculate(finalI));
+          System.out.println(doubles);
+        } catch (TestException e) {
+          e.printStackTrace();
+        }
+      });
+    }
   }
 
   @Override

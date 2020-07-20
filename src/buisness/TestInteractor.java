@@ -1,17 +1,14 @@
 package src.buisness;
 
-import java.lang.Thread.State;
+import java.util.Set;
 import src.TestException;
 import src.callback.TestCallback;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 public class TestInteractor implements ITestInteractor, Runnable {
 
   TestCallback testCallback;
   final Set<Double> resultSet;
-  int currentIteration = 0, iterationsNumber;
+  int currentIteration, iterationsNumber, threadNumber;
 
   public TestInteractor(int currentIteration, Set<Double> resultSet, TestCallback testCallback) {
     this.currentIteration = currentIteration;
@@ -22,6 +19,7 @@ public class TestInteractor implements ITestInteractor, Runnable {
   @Override
   public void execute(int iterationsNumber, int threadNumber) {
     this.iterationsNumber = iterationsNumber;
+    this.threadNumber = threadNumber;
 
     for (int i = 0; i < iterationsNumber; i++) {
       Thread thread = new Thread(new TestInteractor(i, resultSet,  testCallback));
