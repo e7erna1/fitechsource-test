@@ -1,7 +1,9 @@
 package src.buisness;
 
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 import src.TestException;
-import java.util.*;
 
 
 /**
@@ -24,9 +26,6 @@ public class TestCalc {
     int n = rnd.nextInt(num + 1) + 1;
 
     for (int j = 0; j < n; j++) {
-      if (j == 5) {
-        throw new TestException("Exception");
-      }
       res.add(rnd.nextDouble());
     }
     return res;

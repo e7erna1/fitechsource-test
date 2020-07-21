@@ -24,21 +24,23 @@ import src.callback.TestCallback;
 public class Test implements TestCallback {
 
   public static void main(String[] args) throws TestException {
+    Test test = new Test();
+//    test.defaultMethod();
+    test.myMethod();
+  }
 
+  private void defaultMethod() throws TestException {
     Set<Double> res = new HashSet<>();
     for (int i = 0; i < TestConsts.N; i++) {
       res.addAll(TestCalc.calculate(i));
     }
     System.out.println(res);
-
-    Test test = new Test();
-    test.method();
   }
 
-  private void method() {
-    TestInteractor testInteractorSec = new TestInteractor(TestConsts.MAX_THREADS, this);
+  private void myMethod() {
+    TestInteractor testInteractor = new TestInteractor(TestConsts.MAX_THREADS, this);
     for (int i = 0; i < TestConsts.N; i++) {
-      testInteractorSec.execute(i);
+      testInteractor.execute(i);
     }
   }
 

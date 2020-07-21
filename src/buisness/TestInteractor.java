@@ -13,7 +13,7 @@ import src.callback.TestCallback;
 public class TestInteractor implements ITestInteractor {
 
   private final TestCallback testCallback;
-  private final Queue<Runnable> workQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<Runnable> taskQueue = new ConcurrentLinkedQueue<>();
   private final Set<Double> resultSet = Collections.synchronizedSet(new HashSet<>());
   private final List<Thread> threadList = new ArrayList<>();
   private int threadNumber;
@@ -30,27 +30,17 @@ public class TestInteractor implements ITestInteractor {
   }
 
   public void execute(int iterationsNumber) {
-    this.executeTask(() -> {
+    this.addTask(() -> {
       try {
-        Set<Double> doubles = TestCalc.calculate(iterationsNumber);
-        resultSet.addAll(doubles);
-      } catch (TestException e) {
-        isRunning = false;
-        if (!isWritten) {
-          workQueue.clear();
-          isWritten = true;
-          threadList.forEach(Thread::interrupt);
-          resultSet.clear();
-          System.out.println(e.getMessage());
-        }
+        resultSet.addAll(TestCalc.calculate(iterationsNumber));
+      } catch (TestException exception) {
+        exceptionHandler(exception);
       }
     });
   }
 
-  private void executeTask(Runnable command) {
-    if (isRunning) {
-      workQueue.offer(command);
-    }
+  private void addTask(Runnable command) {
+    taskQueue.offer(command);
   }
 
   private void shutdown() {
@@ -61,17 +51,26 @@ public class TestInteractor implements ITestInteractor {
     }
   }
 
+  private void exceptionHandler(TestException exception) {
+    isRunning = false;
+    taskQueue.clear();
+    if (!isWritten) {
+      isWritten = true;
+      threadList.forEach(Thread::interrupt);
+      resultSet.clear();
+      System.out.println(exception.getMessage());
+    }
+  }
+
   private final class TaskWorker implements Runnable {
 
     @Override
     public void run() {
       while (isRunning) {
-        Runnable nextTask = workQueue.poll();
+        Runnable nextTask = taskQueue.poll();
         if (nextTask != null) {
           nextTask.run();
-          System.out.println(workQueue.size());
-          System.out.println(Thread.currentThread().getId());
-          if (workQueue.size() == 0) {
+          if (taskQueue.size() == 0) {
             shutdown();
           }
         }
